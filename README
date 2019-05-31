@@ -1,0 +1,41 @@
+Reliable Digital Simplex Communication using Arduino. 
+
+
+SETUP:
+
+Setup includes:
+— Two Arduino Nanos
+— Two Arduino LCDs
+— One 4-wire wireline Connection
+— One Serial Bluetooth Chip
+— Pushbutton for artificial error injection
+
+Transmitter Arduino communicates to Receiver Arduino using a 4-wire wireline connection. Each wireline connection is tied to a digital pin. The wireline connection consists of: 
+1 — Data Signal
+2 — Clock Signal
+3 — Request Resend Signal
+4 — Ground Reference
+
+Arduinos are tied to LCD screens that display message (Top) and binary stream (Bottom).
+
+Bluetooth chip used to feed message signals to Transmitter, for sending. 
+
+
+TRANSMITTER:
+
+Transmitter waits for message data from bluetooth serial data. Once message is received, the message is broken down into its constituent characters, and then again into its constituent bits according to their ASCII designations. Only the 7 least significant bits (LSB) are used, because the most significant bit (MSB) is always 0 for printable characters. The transmitter then turns on the clock signal, sends the nth data bit, and turns off the clock signal. 
+
+Once the 7 bits are transferred, a byte parity bit is sent as a byte error check. The parity bit is HIGH when data byte contains odd amount of 1’s; parity bit is LOW when data byte contains even 1’s. 
+
+After message is sent, a 7-bit sequence of 0’s (b’0000000’) is sent to signify message end. Once this is done, a 7-bit 1’s compliment checksum is sent (sum of all characters % 127) as message error check. Both of these 7-bit sequences have a byte parity error check as well, making these words one byte long each. 
+
+After each byte is sent, as well as after each message is sent, the system waits for a request resend signal. The transmitter resends the byte, or whole message, if the appropriate request resend flag had been set.
+
+
+RECEIVER:
+
+Receiver catches bits every time the clock signal is HIGH. It then uses these bits to update a byte saved in memory. Once a byte is read, the byte parity error check is analyzed and the system determines whether to send a request resend signal. 
+
+After each character is determined, the Receiver Arduino prints the character on its LCD screen. If the message is understood to be incorrect by the message checksum, the message will be deleted, so that in can be cleanly resent. Beyond being printed on the screen, the received message is saved to a string within the Receiver module. 
+
+
